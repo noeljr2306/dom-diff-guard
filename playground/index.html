@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>dom-diff-guard playground</title>
+    <style>
+      body {
+        font:
+          16px system-ui,
+          sans-serif;
+        max-width: 900px;
+        margin: 2rem auto;
+        padding: 0 1rem;
+      }
+      .grid {
+        display: flex;
+        gap: 1rem;
+        flex-wrap: wrap;
+        margin: 1rem 0;
+      }
+      figure {
+        margin: 0;
+      }
+      figcaption {
+        font-size: 13px;
+        color: #555;
+        margin-bottom: 4px;
+      }
+      .card {
+        width: 240px;
+        height: 90px;
+        box-sizing: border-box;
+        padding: 8px;
+        border: 2px solid #4f46e5;
+        border-radius: 8px;
+        background: #eef2ff;
+        font-size: 18px;
+      }
+      button {
+        padding: 6px 14px;
+        margin-right: 6px;
+      }
+      #log {
+        background: #111;
+        color: #9fe;
+        padding: 10px;
+        border-radius: 6px;
+        font: 12px/1.5 monospace;
+        white-space: pre;
+        min-height: 8em;
+        overflow-x: auto;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>dom-diff-guard playground</h1>
+    <p>
+      Each card is a fixed 240×90 box. Click <b>Stream</b> to simulate an AI
+      response arriving word by word.
+    </p>
+    <button id="stream">Stream</button>
+    <button id="reset">Reset</button>
+
+    <div class="grid">
+      <figure>
+        <figcaption>fit-font</figcaption>
+        <div class="card" data-fix="fit-font" data-label="fit-font"></div>
+      </figure>
+      <figure>
+        <figcaption>scroll</figcaption>
+        <div class="card" data-fix="scroll" data-label="scroll"></div>
+      </figure>
+      <figure>
+        <figcaption>truncate</figcaption>
+        <div class="card" data-fix="truncate" data-label="truncate"></div>
+      </figure>
+    </div>
+
+    <h3>onOverflow log</h3>
+    <div id="log"></div>
+
+    <script type="module">
+      import { DOMDiffGuard } from "../dist/index.mjs";
+
+      const log = document.getElementById("log");
+      const guard = new DOMDiffGuard({
+        onOverflow: (m) => {
+          const line = `${m.target.dataset.label.padEnd(9)} +${m.overflowXPixels}px x  +${m.overflowYPixels}px y  fix=${m.fixApplied}  still=${m.stillOverflowing}`;
+          log.textContent = [line, ...log.textContent.split("\n")]
+            .slice(0, 10)
+            .join("\n");
+        },
+      });
+
+      const cards = [...document.querySelectorAll(".card")];
+      const observeAll = () =>
+        cards.forEach((c) =>
+          guard.observe(c, { autoFix: c.dataset.fix, minFontSize: 10 }),
+        );
+      observeAll();
+
+      const words =
+        "Streaming responses from a language model arrive one token at a time so the container you designed for a short answer suddenly has to hold a whole paragraph of unpredictable length".split(
+          " ",
+        );
+      let timer;
+
+      document.getElementById("stream").onclick = () => {
+        clearInterval(timer);
+        let i = 0;
+        timer = setInterval(() => {
+          if (i >= words.length) return clearInterval(timer);
+          cards.forEach((c) => (c.textContent += words[i] + " "));
+          i++;
+        }, 120);
+      };
+
+      document.getElementById("reset").onclick = () => {
+        clearInterval(timer);
+        cards.forEach((c) => (c.textContent = ""));
+        log.textContent = "";
+        observeAll(); // re-observing restores inline styles and re-evaluates
+      };
+    </script>
+  </body>
+</html>

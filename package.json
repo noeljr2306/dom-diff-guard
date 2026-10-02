@@ -45,6 +45,7 @@
     "dist"
   ],
   "scripts": {
+    "prebuild": "node -e \"require('node:fs').rmSync('dist',{recursive:true,force:true})\"",
     "build": "tsup",
     "dev": "tsup --watch",
     "typecheck": "tsc --noEmit",
@@ -52,6 +53,15 @@
     "test:watch": "vitest",
     "lint:package": "publint && attw --pack .",
     "prepublishOnly": "npm run typecheck && npm test && npm run build"
+  },
+  "author": "Noel Eruotor <noeleruotor23@gmail.com>",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/noeljr2306/dom-diff-guard.git"
+  },
+  "homepage": "https://github.com/noeljr2306/dom-diff-guard#readme",
+  "bugs": {
+    "url": "https://github.com/noeljr2306/dom-diff-guard/issues"
   },
   "peerDependencies": {
     "react": ">=16.8.0"
